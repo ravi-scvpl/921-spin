@@ -4,12 +4,23 @@ const path = require('path');
 const crypto = require('crypto');
 require('dotenv').config();
 
+const firebaseConfig = {
+  apiKey: "AIzaSyD0mvXTWDmDV_PkgGAEMJn0zl0HxxhzDWo",
+  authDomain: "socialrecharge.firebaseapp.com",
+  databaseURL: "https://socialrecharge.firebaseio.com",
+  projectId: "project-1956585320571671692",
+  storageBucket: "project-1956585320571671692.appspot.com",
+  messagingSenderId: "194244686544",
+  appId: "1:194244686544:web:8f351790aa7a5bcc71e4d5",
+  measurementId: "G-J4DY04HZXP"
+};
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 const SECRET_SALT = process.env.SECRET_SALT || "921_BASMATI_RICE_SECRET_SALT_2026";
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
-const FIREBASE_DB_URL = process.env.FIREBASE_DB_URL || "https://socialrecharge.firebaseio.com";
+const FIREBASE_DB_URL = firebaseConfig.databaseURL;
 
 // Helper to read data from Firebase Realtime Database
 async function readFirebase(node) {
