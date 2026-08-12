@@ -1686,7 +1686,7 @@
       if (payload.action === 'spin') route = '/spin';
       else if (payload.action === 'check_phone') route = '/check_phone';
       else if (payload.action === 'claim') route = '/claim';
-      
+
       const res = await fetch(url + route, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2059,13 +2059,14 @@
 
       try {
         const userCredential = await window.confirmationResult.confirm(otp);
-        // Directly proceed using the original spin signature (no verify_otp fetch needed)
         const nextOutcome = { ...state.outcome };
         saveState({ status: 'verified', verifiedAt: Date.now(), outcome: nextOutcome });
         if (resendInterval) {
           clearInterval(resendInterval);
           resendInterval = null;
         }
+        // Auto-submit the verified lead to backend database
+        submitLead({ status: 'verified', claimRef: 'OTP_VERIFIED' });
         renderReward();
         show('reveal');
       } catch (err) {
