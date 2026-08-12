@@ -26,11 +26,21 @@ const FIREBASE_DB_URL = firebaseConfig.databaseURL;
 const FIREBASE_DB_SECRET = process.env.FIREBASE_DB_SECRET;
 const serviceAccountPath = path.join(__dirname, 'serviceAccount.json');
 const hasServiceAccount = fs.existsSync(serviceAccountPath);
-const serviceAccount = hasServiceAccount ? require(serviceAccountPath) : null;
+const localServiceAccount = hasServiceAccount ? require(serviceAccountPath) : {};
+
+const serviceAccount = {
+  project_id: process.env.FIREBASE_PROJECT_ID || localServiceAccount.project_id,
+  private_key: process.env.FIREBASE_PRIVATE_KEY 
+    ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n') 
+    : localServiceAccount.private_key,
+  client_email: process.env.FIREBASE_CLIENT_EMAIL || localServiceAccount.client_email
+};
+
+const hasCredentials = !!(serviceAccount.project_id && serviceAccount.private_key && serviceAccount.client_email);
 
 // Helper to get Google OAuth2 Access Token using the service account JWT (no dependencies)
 async function getAccessToken() {
-  if (!serviceAccount) return null;
+  if (!hasCredentials) return null;
   
   const jwtHeader = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
   
@@ -74,7 +84,7 @@ async function readFirebase(node) {
     const headers = {};
     let url = `${FIREBASE_DB_URL}/${node}.json`;
     
-    if (hasServiceAccount) {
+    if (hasCredentials) {
       const token = await getAccessToken();
       headers['Authorization'] = `Bearer ${token}`;
     } else if (FIREBASE_DB_SECRET) {
@@ -102,7 +112,7 @@ async function pushFirebase(node, item) {
     const headers = { 'Content-Type': 'application/json' };
     let url = `${FIREBASE_DB_URL}/${node}.json`;
     
-    if (hasServiceAccount) {
+    if (hasCredentials) {
       const token = await getAccessToken();
       headers['Authorization'] = `Bearer ${token}`;
     } else if (FIREBASE_DB_SECRET) {
