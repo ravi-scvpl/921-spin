@@ -22,30 +22,43 @@ const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 const FIREBASE_DB_URL = firebaseConfig.databaseURL;
 
+const FIREBASE_DB_SECRET = process.env.FIREBASE_DB_SECRET;
+
 // Helper to read data from Firebase Realtime Database
 async function readFirebase(node) {
   try {
-    const res = await fetch(`${FIREBASE_DB_URL}/${node}.json`);
+    const authParam = FIREBASE_DB_SECRET ? `?auth=${FIREBASE_DB_SECRET}` : '';
+    const res = await fetch(`${FIREBASE_DB_URL}/${node}.json${authParam}`);
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Firebase read error: ${res.status} - ${errText}`);
+    }
     const data = await res.json();
     if (!data) return [];
     // Convert Firebase object map to array
     return Object.keys(data).map(key => ({ id: key, ...data[key] }));
   } catch (e) {
     console.error("Error reading from Firebase:", node, e);
-    return [];
+    throw e;
   }
 }
 
 // Helper to push/append data to Firebase Realtime Database
 async function pushFirebase(node, item) {
   try {
-    await fetch(`${FIREBASE_DB_URL}/${node}.json`, {
+    const authParam = FIREBASE_DB_SECRET ? `?auth=${FIREBASE_DB_SECRET}` : '';
+    const res = await fetch(`${FIREBASE_DB_URL}/${node}.json${authParam}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(item)
     });
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Firebase write error: ${res.status} - ${errText}`);
+    }
   } catch (e) {
     console.error("Error writing to Firebase:", node, e);
+    throw e;
   }
 }
 
