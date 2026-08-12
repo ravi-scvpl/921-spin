@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>921 Basmati Rice • Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f9f6ef;
+      --surface: #ffffff;
+      --border: #e6dec9;
+      --text: #2f2519;
+      --text-muted: #7d7060;
+      --primary: #c1902e;
+      --primary-hover: #a3771f;
+      --accent: #33553a;
+      --white: #ffffff;
+      --shadow: 0 4px 20px rgba(47, 37, 25, 0.05);
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-body: 'Manrope', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 15px;
+    }
+
+    header h1 {
+      font-family: var(--font-display);
+      font-size: 28px;
+      color: var(--primary);
+    }
+
+    .logout-btn {
+      background: none;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .logout-btn:hover {
+      background-color: var(--primary);
+      color: var(--white);
+    }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 30px;
+    }
+
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+
+    /* Login Form */
+    .login-container {
+      max-width: 400px;
+      margin: 100px auto 0;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      outline: none;
+      font-family: inherit;
+    }
+
+    .form-group input:focus {
+      border-color: var(--primary);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px 18px;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary);
+      color: var(--white);
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s;
+    }
+
+    .btn:hover {
+      background: var(--primary-hover);
+    }
+
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    th {
+      font-weight: 700;
+      color: var(--text-muted);
+      background: var(--bg);
+    }
+
+    tr:hover td {
+      background: #faf8f5;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .status-badge.valid {
+      background-color: rgba(51, 85, 58, 0.1);
+      color: var(--accent);
+    }
+
+    .status-badge.tamper_detected {
+      background-color: rgba(194, 69, 59, 0.1);
+      color: #C2453B;
+    }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      outline: none;
+      max-width: 300px;
+      width: 100%;
+    }
+
+    .search-input:focus {
+      border-color: var(--primary);
+    }
+
+    .export-btn {
+      background-color: var(--accent);
+      color: var(--white);
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .export-btn:hover {
+      background-color: #263e2c;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Login Section -->
+  <div id="loginSection" class="login-container card">
+    <h2 class="card-title" style="text-align: center;">Admin Login</h2>
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" required autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn">Log In</button>
+    </form>
+  </div>
+
+  <!-- Dashboard Section -->
+  <div id="dashboardSection" class="container hidden">
+    <header>
+      <h1>921 Basmati Rice Leads</h1>
+      <button id="logoutBtn" class="logout-btn">Log Out</button>
+    </header>
+
+    <div class="toolbar">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search claims (name, phone, city)...">
+      <button id="exportBtn" class="export-btn">Export CSV</button>
+    </div>
+
+    <div class="card table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>City</th>
+            <th>Reward Type</th>
+            <th>Reward Title</th>
+            <th>Coupon Code</th>
+            <th>Address</th>
+            <th>State</th>
+            <th>Pincode</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="claimsBody">
+          <!-- Dynamically populated -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Configure your API backend URL here if hosted separately (e.g., 'https://api.yourdomain.com')
+    const API_URL = window.location.origin.includes(':3000') || window.location.origin.includes('file://')
+      ? 'http://localhost:5000'
+      : '';
+
+    // Check token on load
+    const token = localStorage.getItem('admin_token');
+    if (token) {
+      showDashboard();
+    }
+
+    // Login Form Submit
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      try {
+        const res = await fetch(`${API_URL}/api/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+          localStorage.setItem('admin_token', data.token);
+          showDashboard();
+        } else {
+          alert(data.message || 'Login failed');
+        }
+      } catch (err) {
+        alert('Server connection error. Please try again.');
+      }
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('admin_token');
+      document.getElementById('dashboardSection').classList.add('hidden');
+      document.getElementById('loginSection').classList.remove('hidden');
+    });
+
+    function showDashboard() {
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('dashboardSection').classList.remove('hidden');
+      loadClaims();
+    }
+
+    let allClaims = [];
+
+    // Load Claims from API
+    async function loadClaims() {
+      const currentToken = localStorage.getItem('admin_token');
+      try {
+        const res = await fetch(`${API_URL}/api/admin/claims`, {
+          headers: { 'Authorization': currentToken }
+        });
+        if (res.status === 401) {
+          localStorage.removeItem('admin_token');
+          document.getElementById('dashboardSection').classList.add('hidden');
+          document.getElementById('loginSection').classList.remove('hidden');
+          return;
+        }
+        const data = await res.json();
+        if (data.status === 'success') {
+          allClaims = data.claims;
+          renderClaims(allClaims);
+        }
+      } catch (err) {
+        console.error('Failed to load claims:', err);
+      }
+    }
+
+    // Render Claims Table
+    function renderClaims(claims) {
+      const tbody = document.getElementById('claimsBody');
+      tbody.innerHTML = '';
+
+      if (claims.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--text-muted);">No records found.</td></tr>`;
+        return;
+      }
+
+      // Sort by timestamp descending
+      const sorted = [...claims].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+      sorted.forEach(c => {
+        const tr = document.createElement('tr');
+        const dateStr = new Date(c.timestamp).toLocaleString();
+        
+        tr.innerHTML = `
+          <td>${dateStr}</td>
+          <td><b>${escapeHtml(c.name)}</b></td>
+          <td>${escapeHtml(c.phone)}</td>
+          <td>${escapeHtml(c.city)}</td>
+          <td>${escapeHtml(c.rewardType)}</td>
+          <td>${escapeHtml(c.rewardTitle)}</td>
+          <td><code>${escapeHtml(c.couponCode || '-')}</code></td>
+          <td>${escapeHtml(c.address || '-')}</td>
+          <td>${escapeHtml(c.stateName || '-')}</td>
+          <td>${escapeHtml(c.pincode || '-')}</td>
+          <td><span class="status-badge ${c.status.toLowerCase()}">${escapeHtml(c.status)}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Search filter
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const val = e.target.value.toLowerCase().trim();
+      const filtered = allClaims.filter(c => {
+        return (c.name || '').toLowerCase().includes(val) ||
+               (c.phone || '').toLowerCase().includes(val) ||
+               (c.city || '').toLowerCase().includes(val) ||
+               (c.couponCode || '').toLowerCase().includes(val) ||
+               (c.status || '').toLowerCase().includes(val);
+      });
+      renderClaims(filtered);
+    });
+
+    // Export CSV
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      if (allClaims.length === 0) return;
+      const headers = ['Timestamp', 'Play ID', 'Claim Ref', 'Name', 'Phone', 'City', 'Reward Type', 'Reward Title', 'Coupon Code', 'Address', 'State', 'Pincode', 'Status'];
+      
+      const csvRows = [headers.join(',')];
+      allClaims.forEach(c => {
+        const values = [
+          c.timestamp,
+          c.playId,
+          c.claimRef,
+          `"${escapeCsv(c.name)}"`,
+          c.phone,
+          `"${escapeCsv(c.city)}"`,
+          c.rewardType,
+          `"${escapeCsv(c.rewardTitle)}"`,
+          c.couponCode || '',
+          `"${escapeCsv(c.address || '')}"`,
+          `"${escapeCsv(c.stateName || '')}"`,
+          c.pincode || '',
+          c.status
+        ];
+        csvRows.push(values.join(','));
+      });
+
+      const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('href', url);
+      a.setAttribute('download', `921_basmati_rice_leads_${new Date().toISOString().split('T')[0]}.csv`);
+      a.click();
+    });
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function escapeCsv(str) {
+      if (!str) return '';
+      return String(str).replace(/"/g, '""');
+    }
+  </script>
+</body>
+</html>
