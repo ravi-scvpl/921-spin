@@ -3,4 +3,5 @@
 node_modules/
 data/
 google_apps_script.js
+serviceAccount.json
 mo

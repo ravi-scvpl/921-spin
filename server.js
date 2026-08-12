@@ -23,12 +23,64 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 const FIREBASE_DB_URL = firebaseConfig.databaseURL;
 
 const FIREBASE_DB_SECRET = process.env.FIREBASE_DB_SECRET;
+const serviceAccountPath = path.join(__dirname, 'serviceAccount.json');
+const hasServiceAccount = fs.existsSync(serviceAccountPath);
+const serviceAccount = hasServiceAccount ? require(serviceAccountPath) : null;
+
+// Helper to get Google OAuth2 Access Token using the service account JWT (no dependencies)
+async function getAccessToken() {
+  if (!serviceAccount) return null;
+  
+  const jwtHeader = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
+  
+  const now = Math.floor(Date.now() / 1000);
+  const jwtClaimSet = Buffer.from(JSON.stringify({
+    iss: serviceAccount.client_email,
+    scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/firebase.database',
+    aud: 'https://oauth2.googleapis.com/token',
+    exp: now + 3600,
+    iat: now
+  })).toString('base64url');
+  
+  const signatureInput = `${jwtHeader}.${jwtClaimSet}`;
+  const signer = crypto.createSign('RSA-SHA256');
+  signer.update(signatureInput);
+  const signature = signer.sign(serviceAccount.private_key, 'base64url');
+  
+  const jwt = `${signatureInput}.${signature}`;
+  
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion: jwt
+    })
+  });
+  
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to generate Google Access Token: ${res.status} - ${text}`);
+  }
+  
+  const data = await res.json();
+  return data.access_token;
+}
 
 // Helper to read data from Firebase Realtime Database
 async function readFirebase(node) {
   try {
-    const authParam = FIREBASE_DB_SECRET ? `?auth=${FIREBASE_DB_SECRET}` : '';
-    const res = await fetch(`${FIREBASE_DB_URL}/${node}.json${authParam}`);
+    const headers = {};
+    let url = `${FIREBASE_DB_URL}/${node}.json`;
+    
+    if (hasServiceAccount) {
+      const token = await getAccessToken();
+      headers['Authorization'] = `Bearer ${token}`;
+    } else if (FIREBASE_DB_SECRET) {
+      url += `?auth=${FIREBASE_DB_SECRET}`;
+    }
+    
+    const res = await fetch(url, { headers });
     if (!res.ok) {
       const errText = await res.text();
       throw new Error(`Firebase read error: ${res.status} - ${errText}`);
@@ -46,10 +98,19 @@ async function readFirebase(node) {
 // Helper to push/append data to Firebase Realtime Database
 async function pushFirebase(node, item) {
   try {
-    const authParam = FIREBASE_DB_SECRET ? `?auth=${FIREBASE_DB_SECRET}` : '';
-    const res = await fetch(`${FIREBASE_DB_URL}/${node}.json${authParam}`, {
+    const headers = { 'Content-Type': 'application/json' };
+    let url = `${FIREBASE_DB_URL}/${node}.json`;
+    
+    if (hasServiceAccount) {
+      const token = await getAccessToken();
+      headers['Authorization'] = `Bearer ${token}`;
+    } else if (FIREBASE_DB_SECRET) {
+      url += `?auth=${FIREBASE_DB_SECRET}`;
+    }
+    
+    const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(item)
     });
     if (!res.ok) {
