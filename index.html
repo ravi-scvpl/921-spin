@@ -1679,7 +1679,7 @@
     });
 
     const STORAGE_KEY = 'dottt_921_pending_play_v2';
-    const APPS_SCRIPT_URL = 'http://localhost:5000/api'; // Point to our local Node.js server
+    const API_URL = 'http://localhost:5000/api'; // Point to our local Node.js server
     // gFetch: standard POST request to communicate with our Express backend
     async function gFetch(url, payload) {
       let route = '';
@@ -1793,8 +1793,8 @@
       return deviceId;
     }
     async function submitLead(claimData) {
-      if (!APPS_SCRIPT_URL) {
-        console.log('Apps Script URL not set. Data saved locally:', claimData);
+      if (!API_URL) {
+        console.log('API URL not set. Data saved locally:', claimData);
         return;
       }
       try {
@@ -1815,22 +1815,22 @@
           pincode: claimData.pincode || '',
           timestamp: new Date().toISOString()
         };
-        await fetch(APPS_SCRIPT_URL + '/claim', {
+        await fetch(API_URL + '/claim', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(payload)
         });
-        console.log('Lead submitted successfully to Apps Script.');
+        console.log('Lead submitted successfully to Backend API.');
       } catch (err) {
-        console.error('Failed to submit lead to Apps Script:', err);
+        console.error('Failed to submit lead to Backend API:', err);
       }
     }
     function restore() {
       reelFrame.classList.remove('prestop-blur');
       if (!state) { show('game'); return }
-      if (state.outcome && APPS_SCRIPT_URL && !state.outcome.signature) {
+      if (state.outcome && API_URL && !state.outcome.signature) {
         console.warn('Tampering detected: outcome signature missing. Resetting state.');
         localStorage.removeItem(STORAGE_KEY);
         state = null;
@@ -1903,9 +1903,9 @@
       const playId = 'PLY_' + Math.random().toString(36).slice(2, 9).toUpperCase();
       let outcome;
 
-      if (APPS_SCRIPT_URL) {
+      if (API_URL) {
         try {
-          const result = await gFetch(APPS_SCRIPT_URL, { action: 'spin', playId: playId, deviceId: getDeviceId() });
+          const result = await gFetch(API_URL, { action: 'spin', playId: playId, deviceId: getDeviceId() });
           if (result && result.status === 'success') {
             outcome = result.outcome;
           } else if (result && result.status === 'already_spun') {
@@ -1930,7 +1930,7 @@
           return;
         }
       } else {
-        toast('Configuration error: APPS_SCRIPT_URL is not defined.');
+        toast('Configuration error: API_URL is not defined.');
         machine.classList.remove('spinning');
         btn.disabled = false;
         btn.textContent = 'SPIN';
@@ -2005,9 +2005,9 @@
       sendOtpBtn.disabled = true;
       sendOtpBtn.textContent = 'Sending OTP...';
 
-      if (APPS_SCRIPT_URL) {
+      if (API_URL) {
         try {
-          const checkResult = await gFetch(APPS_SCRIPT_URL, { action: 'check_phone', phone: phone });
+          const checkResult = await gFetch(API_URL, { action: 'check_phone', phone: phone });
           if (checkResult && checkResult.status === 'success' && checkResult.played) {
             toast('You have already played with this mobile number.');
             saveState({ status: 'validation_pending', phone: phone, claimRef: 'ALREADY_PLAYED' });
