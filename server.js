@@ -208,7 +208,7 @@ app.post('/api/spin', async (req, res) => {
       outcome = {
         type: "grand",
         digits: [9, 2, 1],
-        title: "Congratulations, you’re a winner! 🎉",
+        title: "Congratulations, You’re a Winner! 🎉",
         description: "Enjoy 3 kg of premium, long-grain 921 Basmati Rice every month for a year!<br><br>Our team will contact you shortly."
       };
     } else {

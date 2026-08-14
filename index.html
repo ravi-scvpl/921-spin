@@ -1467,7 +1467,7 @@
         <section class="screen" data-screen="locked">
           <div class="card">
             <div class="mystery">?</div>
-            <h3>Did You Hit 921? Find Out.</h3>
+            <h3>Did You Hit 921?<br>Find Out.</h3>
             <p>Verify your details to check your result. Tap below.</p>
             <div class="blurred"></div>
             <button class="primary" type="button" id="claimNow">Check the Result</button>
@@ -1535,32 +1535,36 @@
                 <div class="digit" style="height: 60px; font-size: 38px; line-height: 60px;" id="revealDigit2">1</div>
               </div>
             </div>
-            <h2 class="reward-title" id="rewardTitle">Your reward is ready</h2>
-            <p id="rewardDescription" style="margin-bottom: 20px;"></p>
-            <div id="couponWrap" hidden>
-              <div class="coupon blur-number" id="couponCode"></div>
-              <button type="button" class="reveal-number-btn" id="revealCoupon">Tap to reveal code</button>
-              <div class="small">Use the code according to the reward terms shown with the live campaign.</div>
-            </div>
-            <div id="addressWrap" hidden>
-              <label for="address">Delivery address</label><input id="address" autocomplete="address-line1"
-                placeholder="House, flat, street">
-              <div class="grid2">
-                <div><label for="state">State</label><input id="state" autocomplete="address-level1"
-                    placeholder="State"></div>
-                <div><label for="pincode">PIN code</label><input id="pincode" maxlength="6" inputmode="numeric"
-                    autocomplete="postal-code" placeholder="6 digits"></div>
+            <div id="revealRewardContent"
+              style="opacity: 0; transition: opacity 0.8s ease; pointer-events: none; width: 100%;">
+              <h2 class="reward-title" id="rewardTitle">Your reward is ready</h2>
+              <p id="rewardDescription" style="margin-bottom: 20px;"></p>
+              <div id="couponWrap" hidden>
+                <div class="coupon blur-number" id="couponCode"></div>
+                <button type="button" class="reveal-number-btn" id="revealCoupon">Save Winning Code</button>
+                <div class="small">Please! Save this Code with yourself and share it with our agent to redeem your gift.
+                </div>
               </div>
-              <button class="primary" type="button" id="submitAddress" style="margin-top:18px">Submit for
-                validation</button>
+              <div id="addressWrap" hidden>
+                <label for="address">Delivery address</label><input id="address" autocomplete="address-line1"
+                  placeholder="House, flat, street">
+                <div class="grid2">
+                  <div><label for="state">State</label><input id="state" autocomplete="address-level1"
+                      placeholder="State"></div>
+                  <div><label for="pincode">PIN code</label><input id="pincode" maxlength="6" inputmode="numeric"
+                      autocomplete="postal-code" placeholder="6 digits"></div>
+                </div>
+                <button class="primary" type="button" id="submitAddress" style="margin-top:18px">Submit for
+                  validation</button>
+              </div>
+              <a class="primary" href="https://www.instagram.com/921basmatirice/" target="_blank" rel="noopener"
+                style="display: block; text-align: center; text-decoration: none; margin-top: 18px; line-height: 1.4; padding: 12px 16px; height: auto;">Follow
+                as on Instagram</a>
+              <a class="primary"
+                href="https://www.zepto.com/brand/921/410be690-1d3e-4264-9ba2-3e1cc545915e?srsltid=AfmBOoomibTyiIA4Ih5LitLVZfzARvLvu22CL-vsOeLgVvgmDHmFyZnt"
+                target="_blank" rel="noopener"
+                style="display: block; text-align: center; text-decoration: none; margin-top: 18px;">Shop on Zepto</a>
             </div>
-            <a class="primary" href="https://www.instagram.com/921basmatirice/" target="_blank" rel="noopener"
-              style="display: block; text-align: center; text-decoration: none; margin-top: 18px; line-height: 1.4; padding: 12px 16px; height: auto;">Follow
-              as on Instagram</a>
-            <a class="primary"
-              href="https://www.zepto.com/brand/921/410be690-1d3e-4264-9ba2-3e1cc545915e?srsltid=AfmBOoomibTyiIA4Ih5LitLVZfzARvLvu22CL-vsOeLgVvgmDHmFyZnt"
-              target="_blank" rel="noopener"
-              style="display: block; text-align: center; text-decoration: none; margin-top: 18px;">Shop on Zepto</a>
           </div>
         </section>
 
@@ -1896,7 +1900,10 @@
       if (state.name) document.getElementById('name').value = state.name;
       if (state.phone) document.getElementById('phone').value = state.phone;
       if (state.city) document.getElementById('city').value = state.city;
-      if (state.status === 'verified') renderReward();
+      if (state.status === 'verified') {
+        renderReward();
+        startRevealAnimation();
+      }
       if (state.status === 'otp_pending') initOrResumeResendTimer();
       if (state.claimRef) { document.getElementById('claimRef').textContent = state.claimRef; document.getElementById('claimRef').classList.remove('revealed'); document.getElementById('revealClaimRef').hidden = false; }
     }
@@ -2023,12 +2030,67 @@
       const finishBtn = document.getElementById('finishCoupon');
       if (finishBtn) finishBtn.hidden = grand;
       if (!grand && !lose) { document.getElementById('couponCode').textContent = o.coupon; document.getElementById('couponCode').classList.remove('revealed'); document.getElementById('revealCoupon').hidden = false; }
-      if (grand) confetti();
       if (o && o.digits) {
         document.getElementById('revealDigit0').textContent = o.digits[0];
         document.getElementById('revealDigit1').textContent = o.digits[1];
         document.getElementById('revealDigit2').textContent = o.digits[2];
       }
+    }
+
+    function startRevealAnimation() {
+      const o = state.outcome;
+      if (!o || !o.digits) return;
+
+      const rewardContent = document.getElementById('revealRewardContent');
+      rewardContent.style.opacity = '0';
+      rewardContent.style.pointerEvents = 'none';
+
+      const digits = [
+        document.getElementById('revealDigit0'),
+        document.getElementById('revealDigit1'),
+        document.getElementById('revealDigit2')
+      ];
+
+      const intervals = [];
+      digits.forEach((el, idx) => {
+        el.style.filter = 'blur(2px)';
+        el.style.opacity = '0.7';
+        intervals[idx] = setInterval(() => {
+          el.textContent = Math.floor(Math.random() * 10);
+        }, 50);
+      });
+
+      // Stop digit 0 after 1.2s
+      setTimeout(() => {
+        clearInterval(intervals[0]);
+        digits[0].textContent = o.digits[0];
+        digits[0].style.filter = '';
+        digits[0].style.opacity = '';
+      }, 1200);
+
+      // Stop digit 1 after 1.8s
+      setTimeout(() => {
+        clearInterval(intervals[1]);
+        digits[1].textContent = o.digits[1];
+        digits[1].style.filter = '';
+        digits[1].style.opacity = '';
+      }, 1800);
+
+      // Stop digit 2 after 2.4s
+      setTimeout(() => {
+        clearInterval(intervals[2]);
+        digits[2].textContent = o.digits[2];
+        digits[2].style.filter = '';
+        digits[2].style.opacity = '';
+
+        // All stopped, reveal content
+        rewardContent.style.opacity = '1';
+        rewardContent.style.pointerEvents = 'auto';
+
+        if (o.type === 'grand') {
+          confetti();
+        }
+      }, 2400);
     }
 
     document.getElementById('spinBtn').addEventListener('click', spin);
@@ -2128,6 +2190,7 @@
         submitLead({ status: 'verified', claimRef: 'OTP_VERIFIED' });
         renderReward();
         show('reveal');
+        startRevealAnimation();
       } catch (err) {
         console.error(err);
         toast(err.message || 'Failed to verify OTP. Please try again.');
