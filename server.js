@@ -30,8 +30,8 @@ const localServiceAccount = hasServiceAccount ? require(serviceAccountPath) : {}
 
 const serviceAccount = {
   project_id: process.env.FIREBASE_PROJECT_ID || localServiceAccount.project_id,
-  private_key: process.env.FIREBASE_PRIVATE_KEY 
-    ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n') 
+  private_key: process.env.FIREBASE_PRIVATE_KEY
+    ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
     : localServiceAccount.private_key,
   client_email: process.env.FIREBASE_CLIENT_EMAIL || localServiceAccount.client_email
 };
@@ -41,9 +41,9 @@ const hasCredentials = !!(serviceAccount.project_id && serviceAccount.private_ke
 // Helper to get Google OAuth2 Access Token using the service account JWT (no dependencies)
 async function getAccessToken() {
   if (!hasCredentials) return null;
-  
+
   const jwtHeader = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
-  
+
   const now = Math.floor(Date.now() / 1000);
   const jwtClaimSet = Buffer.from(JSON.stringify({
     iss: serviceAccount.client_email,
@@ -52,14 +52,14 @@ async function getAccessToken() {
     exp: now + 3600,
     iat: now
   })).toString('base64url');
-  
+
   const signatureInput = `${jwtHeader}.${jwtClaimSet}`;
   const signer = crypto.createSign('RSA-SHA256');
   signer.update(signatureInput);
   const signature = signer.sign(serviceAccount.private_key, 'base64url');
-  
+
   const jwt = `${signatureInput}.${signature}`;
-  
+
   const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -68,12 +68,12 @@ async function getAccessToken() {
       assertion: jwt
     })
   });
-  
+
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`Failed to generate Google Access Token: ${res.status} - ${text}`);
   }
-  
+
   const data = await res.json();
   return data.access_token;
 }
@@ -83,14 +83,14 @@ async function readFirebase(node) {
   try {
     const headers = {};
     let url = `${FIREBASE_DB_URL}/${node}.json`;
-    
+
     if (hasCredentials) {
       const token = await getAccessToken();
       headers['Authorization'] = `Bearer ${token}`;
     } else if (FIREBASE_DB_SECRET) {
       url += `?auth=${FIREBASE_DB_SECRET}`;
     }
-    
+
     const res = await fetch(url, { headers });
     if (!res.ok) {
       const errText = await res.text();
@@ -111,14 +111,14 @@ async function pushFirebase(node, item) {
   try {
     const headers = { 'Content-Type': 'application/json' };
     let url = `${FIREBASE_DB_URL}/${node}.json`;
-    
+
     if (hasCredentials) {
       const token = await getAccessToken();
       headers['Authorization'] = `Bearer ${token}`;
     } else if (FIREBASE_DB_SECRET) {
       url += `?auth=${FIREBASE_DB_SECRET}`;
     }
-    
+
     const res = await fetch(url, {
       method: 'POST',
       headers,
@@ -137,8 +137,8 @@ async function pushFirebase(node, item) {
 // Generate HMAC-SHA256 hex signature
 function generateSignature(playId, outcomeType, secret) {
   return crypto.createHmac('sha256', secret)
-               .update(`${playId}:${outcomeType}`)
-               .digest('hex');
+    .update(`${playId}:${outcomeType}`)
+    .digest('hex');
 }
 
 // Helper: Get start of current calendar week (Monday)
@@ -169,7 +169,7 @@ async function isPhoneRegistered(phone) {
   const claims = await readFirebase('claims');
   const cleanPhone = String(phone).replace(/\D/g, "");
   const target = cleanPhone.length > 10 ? cleanPhone.slice(-10) : cleanPhone;
-  
+
   return claims.some(c => {
     const val = String(c.phone).replace(/\D/g, "");
     const cleanVal = val.length > 10 ? val.slice(-10) : val;
@@ -208,15 +208,29 @@ app.post('/api/spin', async (req, res) => {
       outcome = {
         type: "grand",
         digits: [9, 2, 1],
-        title: "Congratulations! You’ve won a year’s supply of 921 Basmati Rice",
-        description: "Our team will touch with you very shortly."
+        title: "Congratulations, you’re a winner! 🎉",
+        description: "Enjoy 3 kg of premium, long-grain 921 Basmati Rice every month for a year!<br><br>Our team will contact you shortly."
       };
     } else {
+      const target = [9, 2, 1];
+      const digits = [0, 0, 0];
+      const matchIndex = Math.floor(Math.random() * 3);
+      for (let i = 0; i < 3; i++) {
+        if (i === matchIndex) {
+          digits[i] = target[i];
+        } else {
+          let randDigit;
+          do {
+            randDigit = Math.floor(Math.random() * 10);
+          } while (randDigit === target[i]);
+          digits[i] = randDigit;
+        }
+      }
       outcome = {
         type: "lose",
-        digits: [9, 2, Math.floor(Math.random() * 8) + 2],
-        title: "OOPs, Not this time!",
-        description: "Thank you for participating. Better luck on your next spin!"
+        digits: digits,
+        title: "Better luck in our next contest!",
+        description: "We appreciate your participation. <br>  Follow 921 Basmati Rice for exciting contests and more opportunities to win big!"
       };
     }
 

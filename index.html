@@ -12,6 +12,36 @@
           'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
     })(window, document, 'script', 'dataLayer', 'GTM-MKCWP24R');</script>
   <!-- End Google Tag Manager -->
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-X355K3K8FM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-X355K3K8FM');
+  </script>
+  <!-- Facebook Pixel Code -->
+  <script>
+    !function (f, b, e, v, n, t, s) {
+      if (f.fbq) return; n = f.fbq = function () {
+        n.callMethod ?
+          n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+      };
+      if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+      n.queue = []; t = b.createElement(e); t.async = !0;
+      t.src = v; s = b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t, s)
+    }(window, document, 'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '448369926064136');
+    fbq('track', 'PageView');
+  </script>
+  <noscript>
+    <img height="1" width="1" src="https://www.facebook.com/tr?id=448369926064136&ev=PageView
+  &noscript=1" />
+  </noscript>
+  <!-- End Facebook Pixel Code -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#f5eedc" />
@@ -1363,8 +1393,8 @@
 
     <section class="hero">
       <div class="hero-copy">
-        <div class="kicker">Spin and win</div>
-        <h1><span>One spin.<br>One lucky number.</span>One Year of 921 Basmati Rice.</h1>
+        <div class="kicker">SPIN & WIN</div>
+        <h1><span>YOUR LUCKY SPIN AWAITS!</span>SPIN. HIT 921. WIN 3kg 921 Basmati rice every month for ONE year!</h1>
         <!-- <p>Your Lucky Number = 921<br>
 
           Give the Lucky Slot a spin.<br>
@@ -1396,9 +1426,11 @@
 
       <section class="stage">
         <section class="screen active" data-screen="game">
-          <div class="screen-head">
-            <!-- <h2>Play Now </h2> -->
-            <!-- <p> Your reward is reserved before the reels stop.</p> -->
+          <div class="screen-head" style="margin-bottom: 12px; padding: 0;">
+            <div style="display: flex; justify-content: center;">
+              <img src="https://921basmatirice.com/cdn/shop/files/logo_1_1_1.png?v=1657108087"
+                style="width: 80px; height: auto; filter: drop-shadow(0 4px 10px rgba(45, 36, 23, .08));" />
+            </div>
           </div>
           <div class="machine-wrap">
             <div class="machine">
@@ -1429,25 +1461,25 @@
               </div>
             </div>
           </div>
-          <div class="slot-note">One eligible play per pack.</div>
+          <div class="slot-note">One eligible play per pack. T&Cs apply.</div>
         </section>
 
         <section class="screen" data-screen="locked">
           <div class="card">
             <div class="mystery">?</div>
-            <h3>Did you win? Check Now</h3>
-            <p>Verify your details to check the results.</p>
+            <h3>Did You Hit 921? Find Out.</h3>
+            <p>Verify your details to check your result. Tap below.</p>
             <div class="blurred"></div>
             <button class="primary" type="button" id="claimNow">Check the Result</button>
-            <div class="small" style="text-align:center;margin-top:13px">Refreshing or returning to this page will
-              restore your pending claim.</div>
+            <div class="small" style="text-align:center;margin-top:13px">Refreshing the page will restore your entry.
+            </div>
           </div>
         </section>
 
         <section class="screen" data-screen="claim">
           <div class="card">
-            <h3>Verify Your Details</h3>
-            <p>Enter your name, mobile number, and city. Winners will provide a delivery address after verification.</p>
+            <h3>ONE STEP<br>TO YOUR REWARD</h3>
+            <p>Enter your details to confirm your reward.</p>
             <label for="name">Full name</label><input id="name" autocomplete="name" placeholder="Enter your full name">
             <label for="phone">Mobile number</label>
             <div class="phone-row"><input value="+91" disabled><input id="phone" maxlength="10" inputmode="numeric"
@@ -1456,7 +1488,7 @@
             <label class="consent"><input id="consent" type="checkbox"><span>I accept the <a href="#"
                   onclick="openModal('terms'); return false;">terms</a> and <a href="#"
                   onclick="openModal('privacy'); return false;">privacy notice</a> and
-                agree to receive messages required to process this reward.</span></label>
+                agree to receive messages required to process my reward.</span></label>
             <div id="recaptcha-container"></div>
             <button class="primary" type="button" id="sendOtp">Send OTP</button>
             <button class="secondary" type="button" id="backLocked">Back</button>
@@ -1484,9 +1516,27 @@
 
         <section class="screen" data-screen="reveal">
           <div class="card">
-            <div class="badge">MOBILE VERIFIED</div>
+            <div id="spinnedOutcomeWrap" style="margin-top: 0; margin-bottom: 20px;">
+              <div
+                style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); font-weight: 700; margin-bottom: 8px; text-align: center;">
+                Your Spin Result</div>
+              <div class="reel-frame" style="max-width: 220px; margin: 0 auto; border-radius: 12px; height: 60px;">
+                <span class="marker left"
+                  style="left: -4px; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 14px solid var(--primary); transform: translateY(-50%);"></span>
+                <span class="marker right"
+                  style="right: -4px; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-right: 14px solid var(--primary); transform: translateY(-50%);"></span>
+                <div class="shade"></div>
+                <div class="digit"
+                  style="height: 60px; font-size: 38px; line-height: 60px; border-right: 1px solid rgba(158, 125, 59, .25);"
+                  id="revealDigit0">9</div>
+                <div class="digit"
+                  style="height: 60px; font-size: 38px; line-height: 60px; border-right: 1px solid rgba(158, 125, 59, .25);"
+                  id="revealDigit1">2</div>
+                <div class="digit" style="height: 60px; font-size: 38px; line-height: 60px;" id="revealDigit2">1</div>
+              </div>
+            </div>
             <h2 class="reward-title" id="rewardTitle">Your reward is ready</h2>
-            <p id="rewardDescription"></p>
+            <p id="rewardDescription" style="margin-bottom: 20px;"></p>
             <div id="couponWrap" hidden>
               <div class="coupon blur-number" id="couponCode"></div>
               <button type="button" class="reveal-number-btn" id="revealCoupon">Tap to reveal code</button>
@@ -1505,8 +1555,12 @@
                 validation</button>
             </div>
             <a class="primary" href="https://www.instagram.com/921basmatirice/" target="_blank" rel="noopener"
-              style="display: block; text-align: center; text-decoration: none; margin-top: 18px;">Follow us on
-              Instagram</a>
+              style="display: block; text-align: center; text-decoration: none; margin-top: 18px; line-height: 1.4; padding: 12px 16px; height: auto;">Follow
+              as on Instagram</a>
+            <a class="primary"
+              href="https://www.zepto.com/brand/921/410be690-1d3e-4264-9ba2-3e1cc545915e?srsltid=AfmBOoomibTyiIA4Ih5LitLVZfzARvLvu22CL-vsOeLgVvgmDHmFyZnt"
+              target="_blank" rel="noopener"
+              style="display: block; text-align: center; text-decoration: none; margin-top: 18px;">Shop on Zepto</a>
           </div>
         </section>
 
@@ -1527,8 +1581,8 @@
     </section>
 
     <section class="benefits">
-      <article class="benefit"><strong>One Year Rice is Your Prize</strong>
-        <p>Every Week, One Lucky Winner Wins* 1 Year of 921 Basmati Rice. *T&C apply</p>
+      <article class="benefit"><strong>WIN RICE FOR A YEAR</strong>
+        <p>Every week, one lucky winner gets 3 kg of 921 Biryani Rice every month for 1 year. *T&C apply</p>
       </article>
       <!-- <article class="benefit"><strong>Weekly Opportunity</strong>
         <p>One Grand Prize winner is selected every week.</p>
@@ -1960,8 +2014,8 @@
     }
     function renderReward() {
       const o = state.outcome;
-      document.getElementById('rewardTitle').textContent = o.title;
-      document.getElementById('rewardDescription').textContent = o.description;
+      document.getElementById('rewardTitle').innerHTML = o.title;
+      document.getElementById('rewardDescription').innerHTML = o.description;
       const grand = o.type === 'grand';
       const lose = o.type === 'lose';
       document.getElementById('addressWrap').hidden = !grand;
@@ -1970,6 +2024,11 @@
       if (finishBtn) finishBtn.hidden = grand;
       if (!grand && !lose) { document.getElementById('couponCode').textContent = o.coupon; document.getElementById('couponCode').classList.remove('revealed'); document.getElementById('revealCoupon').hidden = false; }
       if (grand) confetti();
+      if (o && o.digits) {
+        document.getElementById('revealDigit0').textContent = o.digits[0];
+        document.getElementById('revealDigit1').textContent = o.digits[1];
+        document.getElementById('revealDigit2').textContent = o.digits[2];
+      }
     }
 
     document.getElementById('spinBtn').addEventListener('click', spin);
