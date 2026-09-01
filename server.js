@@ -164,6 +164,13 @@ async function hasGrandWinnerThisWeek() {
   return claims.some(c => c.rewardType === 'grand' && new Date(c.timestamp) >= startOfWeek);
 }
 
+// Get total spin count for the current calendar week
+async function getWeeklySpinsCount() {
+  const spins = await readFirebase('spins');
+  const startOfWeek = getStartOfWeek();
+  return spins.filter(s => s.timestamp && new Date(s.timestamp) >= startOfWeek).length;
+}
+
 // Check if phone is registered in Firebase
 async function isPhoneRegistered(phone) {
   const claims = await readFirebase('claims');
@@ -200,7 +207,16 @@ app.post('/api/spin', async (req, res) => {
     const alreadyHasGrand = await hasGrandWinnerThisWeek();
     let isGrand = false;
     if (!alreadyHasGrand) {
-      isGrand = Math.random() < 0.0005; // 0.05% win rate
+      const weeklySpins = await getWeeklySpinsCount();
+      const winRate = parseFloat(process.env.WIN_RATE || "0.005"); // Default 0.5% (1 in 200)
+      const targetSpins = parseInt(process.env.TARGET_SPINS_PER_WEEK || "200", 10); // Target spins threshold
+
+      if (weeklySpins >= targetSpins - 1) {
+        // Guaranteed winner if target spins per week reached without a winner yet
+        isGrand = true;
+      } else {
+        isGrand = Math.random() < winRate;
+      }
     }
 
     let outcome;
