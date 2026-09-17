@@ -276,6 +276,76 @@ app.post('/api/check_phone', async (req, res) => {
   }
 });
 
+// Action 2A: SEND OTP (2Factor.in SMS Gateway)
+app.post('/api/send_otp', async (req, res) => {
+  try {
+    const { phone } = req.body;
+    if (!phone) {
+      return res.status(400).json({ status: "error", message: "Missing phone number" });
+    }
+    const cleanPhone = String(phone).replace(/\D/g, "");
+    const targetPhone = cleanPhone.length > 10 ? cleanPhone.slice(-10) : cleanPhone;
+    const TWOFACTOR_API_KEY = process.env.TWOFACTOR_API_KEY;
+    const TWOFACTOR_TEMPLATE_NAME = process.env.TWOFACTOR_TEMPLATE_NAME || 'OTP1';
+
+    if (!TWOFACTOR_API_KEY || TWOFACTOR_API_KEY === 'your_2factor_api_key_here') {
+      console.warn("2Factor API Key not configured. Running in Mock Mode for phone:", targetPhone);
+      const mockSessionId = 'MOCK_SESS_' + Date.now();
+      return res.json({ status: "success", sessionId: mockSessionId, mock: true });
+    }
+
+    const twoFactorUrl = TWOFACTOR_TEMPLATE_NAME
+      ? `https://2factor.in/API/V1/${TWOFACTOR_API_KEY}/SMS/${targetPhone}/AUTOGEN/${TWOFACTOR_TEMPLATE_NAME}`
+      : `https://2factor.in/API/V1/${TWOFACTOR_API_KEY}/SMS/${targetPhone}/AUTOGEN`;
+    const response = await fetch(twoFactorUrl);
+
+    const data = await response.json();
+
+    if (data && data.Status === "Success") {
+      return res.json({ status: "success", sessionId: data.Details });
+    } else {
+      return res.status(400).json({ status: "error", message: data.Details || "Failed to send OTP via 2Factor." });
+    }
+  } catch (e) {
+    console.error("Error sending OTP via 2Factor:", e);
+    res.status(500).json({ status: "error", message: e.toString() });
+  }
+});
+
+// Action 2B: VERIFY OTP (2Factor.in SMS Gateway)
+app.post('/api/verify_otp', async (req, res) => {
+  try {
+    const { sessionId, otp } = req.body;
+    if (!sessionId || !otp) {
+      return res.status(400).json({ status: "error", message: "Missing session ID or OTP" });
+    }
+    const TWOFACTOR_API_KEY = process.env.TWOFACTOR_API_KEY;
+
+    if (String(sessionId).startsWith('MOCK_SESS_') || !TWOFACTOR_API_KEY || TWOFACTOR_API_KEY === 'your_2factor_api_key_here') {
+      console.warn("2Factor Mock Mode Verification for OTP:", otp);
+      if (otp.length === 6) {
+        return res.json({ status: "success", message: "OTP Verified (Mock Mode)" });
+      } else {
+        return res.status(400).json({ status: "error", message: "Invalid 6-digit OTP" });
+      }
+    }
+
+    const verifyUrl = `https://2factor.in/API/V1/${TWOFACTOR_API_KEY}/SMS/VERIFY/${sessionId}/${otp}`;
+    const response = await fetch(verifyUrl);
+    const data = await response.json();
+
+    if (data && (data.Status === "Success" || data.Details === "OTP Matched")) {
+      return res.json({ status: "success", message: "OTP Verified" });
+    } else {
+      return res.status(400).json({ status: "error", message: data.Details || "Invalid OTP. Please try again." });
+    }
+  } catch (e) {
+    console.error("Error verifying OTP via 2Factor:", e);
+    res.status(500).json({ status: "error", message: e.toString() });
+  }
+});
+
+
 // Action 3: CLAIM (Validate details, verify signature, record claim)
 app.post('/api/claim', async (req, res) => {
   try {

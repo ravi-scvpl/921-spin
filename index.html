@@ -1489,7 +1489,6 @@
                   onclick="openModal('terms'); return false;">terms</a> and <a href="#"
                   onclick="openModal('privacy'); return false;">privacy notice</a> and
                 agree to receive messages required to process my reward.</span></label>
-            <div id="recaptcha-container"></div>
             <button class="primary" type="button" id="sendOtp">Send OTP</button>
             <button class="secondary" type="button" id="backLocked">Back</button>
           </div>
@@ -1829,29 +1828,7 @@
     });
   </script>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyD0mvXTWDmDV_PkgGAEMJn0zl0HxxhzDWo",
-      authDomain: "socialrecharge.firebaseapp.com",
-      databaseURL: "https://socialrecharge.firebaseio.com",
-      projectId: "project-1956585320571671692",
-      storageBucket: "project-1956585320571671692.appspot.com",
-      messagingSenderId: "194244686544",
-      appId: "1:194244686544:web:8f351790aa7a5bcc71e4d5",
-      measurementId: "G-J4DY04HZXP"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-
-    // Initialize invisible reCAPTCHA verifier
-    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-      size: 'invisible'
-    });
-
+  <script>
     const STORAGE_KEY = 'dottt_921_pending_play_v2';
     const API_URL = 'https://921-spin.vercel.app/api'; // Point to our local Node.js server
     // gFetch: standard POST request to communicate with our Express backend
@@ -1859,6 +1836,8 @@
       let route = '';
       if (payload.action === 'spin') route = '/spin';
       else if (payload.action === 'check_phone') route = '/check_phone';
+      else if (payload.action === 'send_otp') route = '/send_otp';
+      else if (payload.action === 'verify_otp') route = '/verify_otp';
       else if (payload.action === 'claim') route = '/claim';
 
       const res = await fetch(url + route, {
@@ -2261,16 +2240,16 @@
       }
 
       try {
-        const phoneNumber = '+91' + phone;
-        const appVerifier = window.recaptchaVerifier;
-        const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
-        window.confirmationResult = confirmationResult;
-
-        saveState({ status: 'otp_pending', name, phone, city });
-        document.getElementById('otpCopy').textContent = `Enter the OTP sent to +91 ${phone.slice(0, 2)}••••${phone.slice(-4)}.`;
-        show('otp');
-        startResendTimer(60);
-        document.querySelector('#otpRow input').focus();
+        const otpResult = await gFetch(API_URL, { action: 'send_otp', phone: phone });
+        if (otpResult && otpResult.status === 'success') {
+          saveState({ status: 'otp_pending', name, phone, city, sessionId: otpResult.sessionId });
+          document.getElementById('otpCopy').textContent = `Enter the OTP sent to +91 ${phone.slice(0, 2)}••••${phone.slice(-4)}.`;
+          show('otp');
+          startResendTimer(60);
+          document.querySelector('#otpRow input').focus();
+        } else {
+          toast((otpResult && otpResult.message) || 'Failed to send OTP. Please try again.');
+        }
       } catch (err) {
         console.error(err);
         toast(err.message || 'Failed to send OTP. Please try again.');
@@ -2295,18 +2274,22 @@
       verifyOtpBtn.textContent = 'Verifying...';
 
       try {
-        const userCredential = await window.confirmationResult.confirm(otp);
-        const nextOutcome = { ...state.outcome };
-        saveState({ status: 'verified', verifiedAt: Date.now(), outcome: nextOutcome });
-        if (resendInterval) {
-          clearInterval(resendInterval);
-          resendInterval = null;
+        const verifyResult = await gFetch(API_URL, { action: 'verify_otp', sessionId: state ? state.sessionId : '', otp: otp });
+        if (verifyResult && verifyResult.status === 'success') {
+          const nextOutcome = { ...state.outcome };
+          saveState({ status: 'verified', verifiedAt: Date.now(), outcome: nextOutcome });
+          if (resendInterval) {
+            clearInterval(resendInterval);
+            resendInterval = null;
+          }
+          // Auto-submit the verified lead to backend database
+          submitLead({ status: 'verified', claimRef: 'OTP_VERIFIED' });
+          renderReward();
+          show('reveal');
+          startRevealAnimation();
+        } else {
+          toast((verifyResult && verifyResult.message) || 'Invalid OTP. Please try again.');
         }
-        // Auto-submit the verified lead to backend database
-        submitLead({ status: 'verified', claimRef: 'OTP_VERIFIED' });
-        renderReward();
-        show('reveal');
-        startRevealAnimation();
       } catch (err) {
         console.error(err);
         toast(err.message || 'Failed to verify OTP. Please try again.');
@@ -2327,14 +2310,16 @@
       resendBtn.textContent = 'Resending...';
 
       try {
-        const phoneNumber = '+91' + state.phone;
-        const appVerifier = window.recaptchaVerifier;
-        const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
-        window.confirmationResult = confirmationResult;
-
-        saveState({ status: 'otp_pending' });
-        toast('OTP resent successfully!');
-        startResendTimer(60);
+        const otpResult = await gFetch(API_URL, { action: 'send_otp', phone: state.phone });
+        if (otpResult && otpResult.status === 'success') {
+          saveState({ status: 'otp_pending', sessionId: otpResult.sessionId });
+          toast('OTP resent successfully!');
+          startResendTimer(60);
+        } else {
+          toast((otpResult && otpResult.message) || 'Failed to resend OTP. Please try again.');
+          resendBtn.disabled = false;
+          resendBtn.textContent = 'Resend OTP';
+        }
       } catch (err) {
         console.error(err);
         toast(err.message || 'Failed to resend OTP. Please try again.');
