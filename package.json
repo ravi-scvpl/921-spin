@@ -4,11 +4,15 @@
   "description": "Backend API and Admin Dashboard for 921 Basmati Rice Scan & Win Campaign",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "db-gui": "node dbGui.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "express-mongo-sanitize": "^2.2.0",
+    "mongo-express": "^1.1.0-rc-4",
+    "mongoose": "^9.10.1"
   }
 }

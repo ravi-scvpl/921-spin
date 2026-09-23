@@ -4,135 +4,42 @@ const path = require('path');
 const crypto = require('crypto');
 const fs = require('fs');
 require('dotenv').config();
+const mongoose = require('mongoose');
 
-const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY,
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-  databaseURL: process.env.FIREBASE_DATABASE_URL,
-  projectId: process.env.FIREBASE_PROJECT_ID,
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.FIREBASE_APP_ID,
-  measurementId: process.env.FIREBASE_MEASUREMENT_ID
-};
+// MongoDB Connection
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/921spin';
 
-const app = express();
-const PORT = process.env.PORT || 5000;
-const SECRET_SALT = process.env.SECRET_SALT || "921_BASMATI_RICE_SECRET_SALT_2026";
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
-const FIREBASE_DB_URL = firebaseConfig.databaseURL;
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('✅ Connected to MongoDB database successfully'))
+  .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-const FIREBASE_DB_SECRET = process.env.FIREBASE_DB_SECRET;
-const serviceAccountPath = path.join(__dirname, 'serviceAccount.json');
-const hasServiceAccount = fs.existsSync(serviceAccountPath);
-const localServiceAccount = hasServiceAccount ? require(serviceAccountPath) : {};
+// Schemas & Models
+const spinSchema = new mongoose.Schema({
+  timestamp: { type: Date, default: Date.now },
+  playId: { type: String, required: true },
+  deviceId: { type: String, required: true, index: true },
+  type: { type: String, required: true }
+});
 
-const serviceAccount = {
-  project_id: process.env.FIREBASE_PROJECT_ID || localServiceAccount.project_id,
-  private_key: process.env.FIREBASE_PRIVATE_KEY
-    ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
-    : localServiceAccount.private_key,
-  client_email: process.env.FIREBASE_CLIENT_EMAIL || localServiceAccount.client_email
-};
+const claimSchema = new mongoose.Schema({
+  timestamp: { type: Date, default: Date.now },
+  playId: { type: String, default: "" },
+  claimRef: { type: String, default: "" },
+  name: { type: String, default: "" },
+  phone: { type: String, required: true, index: true },
+  city: { type: String, default: "" },
+  rewardType: { type: String, default: "" },
+  rewardTitle: { type: String, default: "" },
+  couponCode: { type: String, default: "" },
+  address: { type: String, default: "" },
+  stateName: { type: String, default: "" },
+  pincode: { type: String, default: "" },
+  deviceId: { type: String, default: "" },
+  status: { type: String, default: "VALID" }
+});
 
-const hasCredentials = !!(serviceAccount.project_id && serviceAccount.private_key && serviceAccount.client_email);
-
-// Helper to get Google OAuth2 Access Token using the service account JWT (no dependencies)
-async function getAccessToken() {
-  if (!hasCredentials) return null;
-
-  const jwtHeader = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
-
-  const now = Math.floor(Date.now() / 1000);
-  const jwtClaimSet = Buffer.from(JSON.stringify({
-    iss: serviceAccount.client_email,
-    scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/firebase.database',
-    aud: 'https://oauth2.googleapis.com/token',
-    exp: now + 3600,
-    iat: now
-  })).toString('base64url');
-
-  const signatureInput = `${jwtHeader}.${jwtClaimSet}`;
-  const signer = crypto.createSign('RSA-SHA256');
-  signer.update(signatureInput);
-  const signature = signer.sign(serviceAccount.private_key, 'base64url');
-
-  const jwt = `${signatureInput}.${signature}`;
-
-  const res = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: jwt
-    })
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Failed to generate Google Access Token: ${res.status} - ${text}`);
-  }
-
-  const data = await res.json();
-  return data.access_token;
-}
-
-// Helper to read data from Firebase Realtime Database
-async function readFirebase(node) {
-  try {
-    const headers = {};
-    let url = `${FIREBASE_DB_URL}/${node}.json`;
-
-    if (hasCredentials) {
-      const token = await getAccessToken();
-      headers['Authorization'] = `Bearer ${token}`;
-    } else if (FIREBASE_DB_SECRET) {
-      url += `?auth=${FIREBASE_DB_SECRET}`;
-    }
-
-    const res = await fetch(url, { headers });
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`Firebase read error: ${res.status} - ${errText}`);
-    }
-    const data = await res.json();
-    if (!data) return [];
-    // Convert Firebase object map to array
-    return Object.keys(data).map(key => ({ id: key, ...data[key] }));
-  } catch (e) {
-    console.error("Error reading from Firebase:", node, e);
-    throw e;
-  }
-}
-
-// Helper to push/append data to Firebase Realtime Database
-async function pushFirebase(node, item) {
-  try {
-    const headers = { 'Content-Type': 'application/json' };
-    let url = `${FIREBASE_DB_URL}/${node}.json`;
-
-    if (hasCredentials) {
-      const token = await getAccessToken();
-      headers['Authorization'] = `Bearer ${token}`;
-    } else if (FIREBASE_DB_SECRET) {
-      url += `?auth=${FIREBASE_DB_SECRET}`;
-    }
-
-    const res = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(item)
-    });
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`Firebase write error: ${res.status} - ${errText}`);
-    }
-  } catch (e) {
-    console.error("Error writing to Firebase:", node, e);
-    throw e;
-  }
-}
+const Spin = mongoose.model('Spin', spinSchema);
+const Claim = mongoose.model('Claim', claimSchema);
 
 // Generate HMAC-SHA256 hex signature
 function generateSignature(playId, outcomeType, secret) {
@@ -151,38 +58,63 @@ function getStartOfWeek() {
   return startOfWeek;
 }
 
-// Check if device has already spun in Firebase
+// Check if device has already spun in MongoDB
 async function isDeviceSpun(deviceId) {
-  const spins = await readFirebase('spins');
-  return spins.some(s => s.deviceId === deviceId);
+  const count = await Spin.countDocuments({ deviceId });
+  return count > 0;
 }
 
-// Check if we already have a grand winner this week in Firebase
+// Check if we already have a grand winner this week in MongoDB
 async function hasGrandWinnerThisWeek() {
-  const claims = await readFirebase('claims');
   const startOfWeek = getStartOfWeek();
-  return claims.some(c => c.rewardType === 'grand' && new Date(c.timestamp) >= startOfWeek);
+  const count = await Claim.countDocuments({
+    rewardType: 'grand',
+    timestamp: { $gte: startOfWeek }
+  });
+  return count > 0;
 }
 
 // Get total spin count for the current calendar week
 async function getWeeklySpinsCount() {
-  const spins = await readFirebase('spins');
   const startOfWeek = getStartOfWeek();
-  return spins.filter(s => s.timestamp && new Date(s.timestamp) >= startOfWeek).length;
+  return await Spin.countDocuments({
+    timestamp: { $gte: startOfWeek }
+  });
 }
 
-// Check if phone is registered in Firebase
+// Check if phone is registered in MongoDB
 async function isPhoneRegistered(phone) {
-  const claims = await readFirebase('claims');
   const cleanPhone = String(phone).replace(/\D/g, "");
   const target = cleanPhone.length > 10 ? cleanPhone.slice(-10) : cleanPhone;
-
+  
+  // Search phone matching ending target digits
+  const claims = await Claim.find({}, { phone: 1 }).lean();
   return claims.some(c => {
     const val = String(c.phone).replace(/\D/g, "");
     const cleanVal = val.length > 10 ? val.slice(-10) : val;
     return cleanVal === target;
   });
 }
+
+// Compatibility helper for writing data to MongoDB
+async function pushFirebase(node, item) {
+  try {
+    if (node === 'spins') {
+      await Spin.create(item);
+    } else if (node === 'claims') {
+      await Claim.create(item);
+    }
+  } catch (e) {
+    console.error("Error writing to MongoDB:", node, e);
+    throw e;
+  }
+}
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+const SECRET_SALT = process.env.SECRET_SALT || "921_BASMATI_RICE_SECRET_SALT_2026";
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
 // Middleware
 app.use(cors());
@@ -420,13 +352,18 @@ app.post('/api/admin/login', (req, res) => {
 
 // Admin Get Claims Route
 app.get('/api/admin/claims', async (req, res) => {
-  const token = req.headers.authorization;
-  if (!token) {
-    return res.status(401).json({ status: "error", message: "Unauthorized" });
+  try {
+    const token = req.headers.authorization;
+    if (!token) {
+      return res.status(401).json({ status: "error", message: "Unauthorized" });
+    }
+    const claims = await Claim.find().sort({ timestamp: -1 }).lean();
+    res.json({ status: "success", claims });
+  } catch (e) {
+    res.status(500).json({ status: "error", message: e.toString() });
   }
-  const claims = await readFirebase('claims');
-  res.json({ status: "success", claims });
 });
+
 
 // Start Server
 app.listen(PORT, () => {
